@@ -8,16 +8,31 @@ import os
 app = Flask(__name__)
 CORS(app)  # This allows your frontend to talk to this API
 
+# Initialize model as None
+model = None
+
 # Get the directory where this script is located
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(BASE_DIR, "models", "churn_model.pkl")
+# Try multiple possible paths for the model
+possible_paths = [
+    os.path.join(BASE_DIR, "models", "churn_model.pkl"),
+    os.path.join(BASE_DIR, "churn_model.pkl"),
+    "models/churn_model.pkl",
+    "churn_model.pkl"
+]
 
 # Load the model
-try:
-    model = joblib.load(model_path)
-    print(f"✅ Model loaded successfully from {model_path}")
-except Exception as e:
-    print(f"❌ Error loading model: {e}")
+for path in possible_paths:
+    try:
+        if os.path.exists(path):
+            model = joblib.load(path)
+            print(f"✅ Model loaded successfully from {path}")
+            break
+    except Exception as e:
+        print(f"⚠️ Tried loading from {path} but failed: {e}")
+
+if model is None:
+    print("❌ CRITICAL: Could not load model from any location!")
 
 # Encoding maps
 geo_map = {"France": 0, "Germany": 1, "Spain": 2}
